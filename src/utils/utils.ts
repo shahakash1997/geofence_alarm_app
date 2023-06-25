@@ -1,7 +1,15 @@
-import {Audio} from 'expo-av';
+import {Audio, InterruptionModeAndroid, InterruptionModeIOS} from 'expo-av';
 import {Vibration} from "react-native";
 
 const sound = new Audio.Sound();
+
+Audio.setAudioModeAsync({
+    allowsRecordingIOS: false,
+    staysActiveInBackground: true,
+    playsInSilentModeIOS: true,
+    shouldDuckAndroid: true,
+    playThroughEarpieceAndroid: false
+});
 
 export function isEmptyOrBlank(str: string | null | undefined) {
     return !str || str.length === 0 || /^\s*$/.test(str);
@@ -10,6 +18,15 @@ export function isEmptyOrBlank(str: string | null | undefined) {
 
 export async function playSound() {
     try {
+        await Audio.setAudioModeAsync({
+            allowsRecordingIOS: false,
+            staysActiveInBackground: true,
+            interruptionModeIOS: InterruptionModeIOS.DuckOthers,
+            playsInSilentModeIOS: true,
+            shouldDuckAndroid: true,
+            interruptionModeAndroid: InterruptionModeAndroid.DuckOthers,
+            playThroughEarpieceAndroid: false
+        });
         await sound.loadAsync(require('../../assets/sound.mp3'), {shouldPlay: true});
         await sound.setPositionAsync(0);
         await sound.playAsync();

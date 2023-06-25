@@ -1,11 +1,18 @@
 import * as Location from 'expo-location';
-import {Accuracy, LocationCallback, LocationRegion} from 'expo-location';
+import {Accuracy, LocationAccuracy, LocationCallback, LocationRegion} from 'expo-location';
 import {GEOFENCE_TASK_NAME, LOCATION_UPDATES} from '../constants/constant';
 
 export default class LocationManager {
     private static instance: LocationManager;
 
     constructor() {
+    }
+
+    public static getInstance(): LocationManager {
+        if (!LocationManager.instance) {
+            LocationManager.instance = new LocationManager();
+        }
+        return LocationManager.instance;
     }
 
     public async checkForLocationPermissions(): Promise<boolean> {
@@ -37,12 +44,7 @@ export default class LocationManager {
         }
     }
 
-    public static getInstance(): LocationManager {
-        if (!LocationManager.instance) {
-            LocationManager.instance = new LocationManager();
-        }
-        return LocationManager.instance;
-    }
+
 
     public async getCurrentPositionAsync() {
         return Location.getCurrentPositionAsync({
@@ -61,9 +63,13 @@ export default class LocationManager {
     public async startLocationUpdates() {
         await Location.startLocationUpdatesAsync(LOCATION_UPDATES, {
             showsBackgroundLocationIndicator: true,
+            mayShowUserSettingsDialog: true,
+            accuracy: LocationAccuracy.Low,
+            timeInterval: 10000,
+            distanceInterval: 100,
             foregroundService: {
                 notificationTitle: 'Office Commute Geofence app is running',
-                notificationBody: 'Have a good sleep. I will awake you. Truse me!',
+                notificationBody: 'Have a good sleep. I will awake you. Trust me!',
                 killServiceOnDestroy: false
             }
         });
@@ -75,6 +81,7 @@ export default class LocationManager {
 
     public async startForegroundLocationUpdates(callback: LocationCallback) {
         await Location.watchPositionAsync({
+            accuracy: LocationAccuracy.Low,
             mayShowUserSettingsDialog: true,
             timeInterval: 10000,
             distanceInterval: 100

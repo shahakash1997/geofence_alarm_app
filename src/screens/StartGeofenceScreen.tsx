@@ -6,9 +6,11 @@ import {CommonStyles} from "../styles/CommonStyles";
 import LocationManager from "../utils/LocationManager";
 import ProgressDialog from "../widgets/ProgressDialog";
 import {SavedLocation} from "../models/models";
-import {isEmptyOrBlank, playSound} from "../utils/utils";
+import {isEmptyOrBlank} from "../utils/utils";
 import {LocationObject} from "expo-location";
+import AppLocalStorage, {CACHE_KEYS} from "../cache/AppLocalStorage";
 
+const cache = AppLocalStorage.getInstance();
 
 const locationManager = LocationManager.getInstance();
 const StartGeofenceScreen = (props: any) => {
@@ -17,7 +19,6 @@ const StartGeofenceScreen = (props: any) => {
     const geofenceData: SavedLocation = props.route.params;
     const [geofenceStarted, setGeofenceStarted] = useState(false);
     const [location, setLocation] = useState<LocationObject>();
-
 
     useEffect(() => {
         (async () => {
@@ -36,12 +37,12 @@ const StartGeofenceScreen = (props: any) => {
                 </View>
                 <Button mode={'contained'}
                         onPress={async () => {
-                            await playSound();
                             if (await locationManager.hasGeofencingStarted())
                                 await locationManager.stopGeofencing();
                             if (await locationManager.isUpdatesRunning())
                                 await locationManager.stopLocationUpdates();
                             setGeofenceStarted(false);
+                            await cache.setObjectInCache(CACHE_KEYS.LAST_GEOFENCE, {});
                         }}
                         style={[{borderRadius: 10}, CommonStyles.bottom]}>{'Stop Geofencing'}</Button>
             </View>
@@ -80,8 +81,10 @@ const StartGeofenceScreen = (props: any) => {
                                     notifyOnEnter: true,
                                     notifyOnExit: true,
                                 }]);
+                                await cache.setObjectInCache(CACHE_KEYS.LAST_GEOFENCE, geofenceData);
                                 await locationManager.startLocationUpdates();
                                 await locationManager.startForegroundLocationUpdates((location) => {
+                                    console.log('FG updates ')
                                     console.log(location);
                                     setLocation(location);
                                 })
