@@ -64,7 +64,7 @@ export default class LocationManager {
         await Location.startLocationUpdatesAsync(LOCATION_UPDATES, {
             showsBackgroundLocationIndicator: true,
             mayShowUserSettingsDialog: true,
-            accuracy: LocationAccuracy.Low,
+            accuracy: LocationAccuracy.Highest,
             timeInterval: 10000,
             distanceInterval: 100,
             foregroundService: {

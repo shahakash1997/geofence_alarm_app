@@ -1,14 +1,16 @@
-import React, {useEffect, useState} from "react";
+import React, {useCallback, useEffect, useState} from "react";
 import {SafeAreaView, View} from "react-native";
-import {Button, Text, TextInput} from "react-native-paper";
+import {Button, Divider, Text, TextInput} from "react-native-paper";
 import {showToast} from "../components/Toaster";
-import {CommonStyles} from "../styles/CommonStyles";
+import {CommonStyles, Fonts} from "../styles/CommonStyles";
 import LocationManager from "../utils/LocationManager";
 import ProgressDialog from "../widgets/ProgressDialog";
 import {SavedLocation} from "../models/models";
 import {isEmptyOrBlank} from "../utils/utils";
 import {LocationObject} from "expo-location";
 import AppLocalStorage, {CACHE_KEYS} from "../cache/AppLocalStorage";
+import * as Location from 'expo-location';
+
 
 const cache = AppLocalStorage.getInstance();
 
@@ -19,11 +21,39 @@ const StartGeofenceScreen = (props: any) => {
     const geofenceData: SavedLocation = props.route.params;
     const [geofenceStarted, setGeofenceStarted] = useState(false);
     const [location, setLocation] = useState<LocationObject>();
+    const [distance, setDistance] = useState<number>();
+
+
+    const startLocationUpdates = useCallback(async () => {
+        //Background for self calculation if geofencing fails
+        if (!await locationManager.isUpdatesRunning())
+            await locationManager.startLocationUpdates();
+        //Foreground
+        await locationManager.startForegroundLocationUpdates((location) => {
+            console.log(location);
+            setLocation(location);
+            // calculate distance
+            setDistance(1200000);
+        })
+    }, [location]);
+
+    const stopLocationUpdateAndGeofencing = useCallback(async () => {
+        if (await locationManager.hasGeofencingStarted())
+            await locationManager.stopGeofencing();
+        if (await locationManager.isUpdatesRunning())
+            await locationManager.stopLocationUpdates();
+        setGeofenceStarted(false);
+
+    }, []);
+
 
     useEffect(() => {
         (async () => {
             const started = await locationManager.hasGeofencingStarted();
             setGeofenceStarted(started);
+            if (started) {
+                await startLocationUpdates();
+            }
         })();
     }, []);
     if (geofenceStarted) {
@@ -32,16 +62,33 @@ const StartGeofenceScreen = (props: any) => {
             <View style={{flex: 1, padding: 10, flexDirection: 'column'}}>
                 <View style={{flex: 1}}>
                     <Text>{JSON.stringify(geofenceData)}</Text>
-                    <Text>{'Current Location'}</Text>
-                    <Text>{`${location?.coords.latitude},${location?.coords.longitude}`}</Text>
+                    <View style={{alignItems: 'center', justifyContent: 'center', flex: 1}}>
+                        <Text style={{
+                            fontSize: 20,
+                            fontFamily: Fonts.IBMPlexSans_600SemiBold
+                        }}>{'Current Location'}</Text>
+                        <Text
+                            style={{
+                                fontFamily: Fonts.IBMPlexSans_700Bold_Italic,
+                                fontSize: 25, textAlign: 'center'
+                            }}>{`${location?.coords.latitude},${location?.coords.longitude}`}</Text>
+                        <Divider bold={true}/>
+                        <Divider/>
+                        <Divider/>
+                        <Text style={{
+                            fontSize: 20,
+                            fontFamily: Fonts.IBMPlexSans_600SemiBold
+                        }}>{'Distance to cover'}</Text>
+                        <Text style={{
+                            fontSize: 25,
+                            fontFamily: Fonts.IBMPlexSans_700Bold_Italic
+                        }}>{`${distance}m`}</Text>
+                    </View>
                 </View>
                 <Button mode={'contained'}
+                        uppercase={true}
                         onPress={async () => {
-                            if (await locationManager.hasGeofencingStarted())
-                                await locationManager.stopGeofencing();
-                            if (await locationManager.isUpdatesRunning())
-                                await locationManager.stopLocationUpdates();
-                            setGeofenceStarted(false);
+                            await stopLocationUpdateAndGeofencing();
                             await cache.setObjectInCache(CACHE_KEYS.LAST_GEOFENCE, {});
                         }}
                         style={[{borderRadius: 10}, CommonStyles.bottom]}>{'Stop Geofencing'}</Button>
@@ -63,9 +110,10 @@ const StartGeofenceScreen = (props: any) => {
                     />
                 </View>
                 <Button mode={'contained'}
+                        uppercase={true}
                         onPress={async () => {
                             if (await locationManager.hasGeofencingStarted()) {
-                                showToast('GEOFENCE already running');
+                                showToast('Geofencing already running');
                             }
                             if (isEmptyOrBlank(radius)) {
                                 showToast('Please enter radius');
@@ -81,15 +129,10 @@ const StartGeofenceScreen = (props: any) => {
                                     notifyOnEnter: true,
                                     notifyOnExit: true,
                                 }]);
-                                await cache.setObjectInCache(CACHE_KEYS.LAST_GEOFENCE, geofenceData);
-                                await locationManager.startLocationUpdates();
-                                await locationManager.startForegroundLocationUpdates((location) => {
-                                    console.log('FG updates ')
-                                    console.log(location);
-                                    setLocation(location);
-                                })
-                                setProgress(false);
                                 setGeofenceStarted(true);
+                                await cache.setObjectInCache(CACHE_KEYS.LAST_GEOFENCE, geofenceData);
+                                startLocationUpdates().then().catch();
+                                setProgress(false);
                             } catch (error: any) {
                                 showToast(error.message);
                                 setProgress(false);

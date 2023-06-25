@@ -7,16 +7,13 @@ import {showToast} from "./src/components/Toaster";
 import {playSound, vibrate} from "./src/utils/utils";
 import {GeofencingEventType} from "expo-location";
 import NotificationManager from "./src/utils/NotificationManager";
-
-// registerRootComponent calls AppRegistry.registerComponent('main', () => App);
-// It also ensures that whether you load the app in Expo Go or in a native build,
-// the environment is set up appropriately
 registerRootComponent(App);
 TaskManager.defineTask(LOCATION_UPDATES, ({data: {locations}, error}) => {
     if (error) {
         showToast(error.message)
         return;
     }
+    //todo
     console.log('Received new locations', locations);
 });
 
