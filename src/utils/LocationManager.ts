@@ -44,6 +44,11 @@ export default class LocationManager {
         }
     }
 
+    public async getAddress(lat: number, long: number) {
+        return await Location.reverseGeocodeAsync({
+            latitude: lat, longitude: long
+        }, {useGoogleMaps: false});
+    }
 
 
     public async getCurrentPositionAsync() {

@@ -1,23 +1,29 @@
 import {hookstate, useHookstate} from '@hookstate/core';
+import {SavedLocation} from "../models/models";
 
-export interface UserSession {
-    isLoggedIn: boolean;
-    token: string | null;
-    user: string | null;
+export interface AppSessionInterface {
+    geofenceRunning: boolean
+    lastGeofenceData: SavedLocation | null
 }
 
+const lastLoc: SavedLocation | null = null
+
 const initialGlobalState = hookstate({
-    isLoggedIn: false,
-    token: null,
-    user: null,
+    geofenceRunning: false,
+    lastGeofenceData: lastLoc,
 });
 
 export const useGlobalSessionState = () => {
-    const currentUserSession = useHookstate(initialGlobalState);
+    const currentAppSession = useHookstate<AppSessionInterface>(initialGlobalState);
     return {
-        getUserSession: () => currentUserSession.value,
-        setUserSession: (session: any) => {
-            currentUserSession.set(session);
-        },
+        isGeofenceRunning: () => currentAppSession.get().geofenceRunning,
+        getGeofenceData: () => currentAppSession.get().lastGeofenceData,
+
+        setAppSession: (started: boolean, location: SavedLocation | null) => {
+            currentAppSession.set({
+                geofenceRunning: started,
+                lastGeofenceData: location
+            })
+        }
     };
 };

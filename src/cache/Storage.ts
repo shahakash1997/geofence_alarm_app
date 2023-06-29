@@ -38,7 +38,7 @@ class Storage {
      * @param {string} key
      * @returns {Promise<{}|[]>}
      */
-    async setObject(key: string, value: {} | []): Promise<void> {
+    async setObject(key: string, value: {} | [] | null): Promise<void> {
         if (!key) {
             throw TypeError('In-valid params.');
         } else {

@@ -65,4 +65,16 @@ export default class LocationDB {
         );
         return resultSet.rows._array;
     }
+
+    public async deleteLocation(loc: SavedLocation): Promise<boolean> {
+        try {
+            const resultSet = await Database.executeQuery(
+                `DELETE FROM ${SAVED_LOCATIONS_TABLE} WHERE ${SL_COLUMN.id} = ?;`,
+                [loc.id]
+            );
+            return true;
+        } catch (error: any) {
+            return false;
+        }
+    }
 }

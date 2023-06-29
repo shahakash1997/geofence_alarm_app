@@ -6,21 +6,28 @@ import {KeyboardAvoidingView, StyleSheet, View} from "react-native";
 import {showToast} from "./Toaster";
 import {SavedLocation} from "../models/models";
 import LocationDB from "../database/LocationDB";
+import LocationManager from "../utils/LocationManager";
+
+
+const locationManager = LocationManager.getInstance();
 
 
 export interface AddLocationDialog {
     visible: boolean
     hideDialog: () => void
+    locationName?: string,
+    latitude?: string,
+    longitude?: string
 }
 
 const AddLocationDialog = (etProps: AddLocationDialog) => {
-    const [name, setName] = useState('');
-    const [latitude, setLatitude] = useState('');
-    const [longitude, setLongitude] = useState('');
-
+    const [name, setName] = useState(etProps.locationName ?? '');
+    const [latitude, setLatitude] = useState(etProps.latitude ?? '');
+    const [longitude, setLongitude] = useState(etProps.longitude ?? '');
+    const [locationName, setLocationName] = useState('');
+    const [btnLoading, setLoading] = useState(false);
 
     return (
-
         <Modal
             onDismiss={etProps.hideDialog}
             dismissable={false}
@@ -58,7 +65,19 @@ const AddLocationDialog = (etProps: AddLocationDialog) => {
                         onChangeText={text => setLongitude(text)}
                     />
                 </View>
-
+                <Button icon="crosshairs-gps"
+                        loading={btnLoading}
+                        mode="text"
+                        onPress={async () => {
+                            setLoading(true);
+                            const currentLoc = await LocationManager.getInstance().getCurrentPositionAsync();
+                            setLatitude(currentLoc.coords.latitude.toString())
+                            setLongitude(currentLoc.coords.longitude.toString())
+                            setLoading(false);
+                        }
+                        }>
+                    Set Current Location
+                </Button>
                 <Button
                     mode={'contained'}
                     uppercase={false}

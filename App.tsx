@@ -23,6 +23,7 @@ import {
 } from "@expo-google-fonts/ibm-plex-sans";
 import ProgressDialog from "./src/widgets/ProgressDialog";
 
+
 const locationManager = LocationManager.getInstance();
 export default function App() {
     let [fontsLoaded] = useFonts({

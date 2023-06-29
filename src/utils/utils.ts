@@ -1,42 +1,11 @@
-import {Audio, InterruptionModeAndroid, InterruptionModeIOS} from 'expo-av';
 import {Vibration} from "react-native";
+import {LocationGeocodedAddress} from "expo-location/src/Location.types";
 
-const sound = new Audio.Sound();
-
-Audio.setAudioModeAsync({
-    allowsRecordingIOS: false,
-    staysActiveInBackground: true,
-    playsInSilentModeIOS: true,
-    shouldDuckAndroid: true,
-    playThroughEarpieceAndroid: false
-});
 
 export function isEmptyOrBlank(str: string | null | undefined) {
     return !str || str.length === 0 || /^\s*$/.test(str);
 }
 
-
-export async function playSound() {
-    try {
-        await Audio.setAudioModeAsync({
-            allowsRecordingIOS: false,
-            staysActiveInBackground: true,
-            interruptionModeIOS: InterruptionModeIOS.DuckOthers,
-            playsInSilentModeIOS: true,
-            shouldDuckAndroid: true,
-            interruptionModeAndroid: InterruptionModeAndroid.DuckOthers,
-            playThroughEarpieceAndroid: false
-        });
-        await sound.loadAsync(require('../../assets/sound.mp3'), {shouldPlay: true});
-        await sound.setPositionAsync(0);
-        await sound.playAsync();
-        await sound.unloadAsync();
-
-    } catch (error: any) {
-        // An error occurred!
-        console.log(error.message);
-    }
-}
 
 export async function vibrate() {
     const ONE_SECOND_IN_MS = 1000;
@@ -46,4 +15,23 @@ export async function vibrate() {
         3 * ONE_SECOND_IN_MS,
     ];
     Vibration.vibrate(PATTERN);
+}
+
+/**
+ *  [{"city": "Navi Mumbai", "country": "India", "district": "CBD Belapur", "isoCountryCode": "IN", "name": "C.B.D. Fire Brigade Station", "postalCode": "400614", "region": "Maharashtra", "street": null, "streetNumber": null, "subregion": "Konkan Division", "timezone": null}]
+ * @param geocodedAddresses
+ */
+export function getStringAddress(geocodedAddresses: LocationGeocodedAddress[]): string {
+    if (geocodedAddresses.length === 0) return '';
+    else if (geocodedAddresses.length > 0) {
+        const actualAddress = geocodedAddresses[0];
+        let address = '';
+        address += actualAddress.name + ', ';
+        address += actualAddress.subregion + ' ';
+        address += actualAddress.district + ` (${actualAddress.postalCode}) `;
+        address += actualAddress.city + ' ';
+        address += actualAddress.country + `(${actualAddress.isoCountryCode}) `;
+        return address;
+    } else return '';
+
 }
