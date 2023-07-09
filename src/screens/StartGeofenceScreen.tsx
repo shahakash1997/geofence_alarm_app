@@ -1,5 +1,5 @@
 import React, {useCallback, useEffect, useRef, useState} from "react";
-import {KeyboardAvoidingView, SafeAreaView, View} from "react-native";
+import {KeyboardAvoidingView, SafeAreaView, ScrollView, View} from "react-native";
 import {Button, Card, Text, TextInput} from "react-native-paper";
 import {showToast} from "../components/Toaster";
 import {CommonStyles, Fonts} from "../styles/CommonStyles";
@@ -30,6 +30,7 @@ const StartGeofenceScreen = (props: any) => {
     const [distance, setDistance] = useState<string>('');
     const sessionState = useGlobalSessionState();
     const navigator = useNavigation();
+    const [editDialog, setEditDialog] = useState(false);
 
     const [locationName, setLocationName] = useState('');
 
@@ -126,7 +127,7 @@ const StartGeofenceScreen = (props: any) => {
         </SafeAreaView>);
     } else return (
         <KeyboardAvoidingView style={{flex: 1}}>
-            <SafeAreaView style={{flex: 1}}>
+            <ScrollView style={{flex: 1}}>
                 <ProgressDialog visible={progress} label={'Please wait...'}/>
                 <View style={{flex: 1, padding: 10, flexDirection: 'column'}}>
                     <View style={{flex: 1}}>
@@ -139,17 +140,20 @@ const StartGeofenceScreen = (props: any) => {
                                     ref={animation}
                                     style={{
                                         width: '100%',
-                                        backgroundColor: 'white',
+                                        backgroundColor: 'auto',
                                     }}
                                     source={require('../../assets/Location_Forked.json')}
                                 />
                             </Card.Content>
                             <Card.Actions>
                                 <Button onPress={() => {
+                                    setEditDialog(true);
                                 }}>Edit Location</Button>
                                 <Button onPress={async () => {
                                     const db = await LocationDB.getInstance();
                                     const deleted = await db.deleteLocation(geofenceData);
+                                    const locations = await db.getAllLocations();
+                                    sessionState.setSavedLocations(locations);
                                     if (deleted)
                                         navigator.goBack();
                                     else {
@@ -160,49 +164,51 @@ const StartGeofenceScreen = (props: any) => {
                             </Card.Actions>
                         </Card>
                     </View>
-                    <View style={CommonStyles.bottom}>
-                        <TextInput
-                            style={{marginTop: 10}}
-                            mode={'outlined'}
-                            keyboardType={'numeric'}
-                            label="Radius  (in m)"
-                            value={radius}
-                            onChangeText={text => setRadius(text)}
-                        />
-                        <Button mode={'contained'}
-                                uppercase={true}
-                                onPress={async () => {
-                                    if (await locationManager.hasGeofencingStarted()) {
-                                        showToast('Geofencing already running');
-                                    }
-                                    if (isEmptyOrBlank(radius)) {
-                                        showToast('Please enter radius');
-                                        return;
-                                    }
-                                    setProgress(true);
-                                    try {
-                                        let rd = parseInt(radius);
-                                        await locationManager.startGeofencing([{
-                                            latitude: geofenceData.latitude,
-                                            longitude: geofenceData.longitude,
-                                            radius: rd,
-                                            notifyOnEnter: true,
-                                            notifyOnExit: true,
-                                        }]);
-                                        setGeofenceStarted(true);
-                                        await cache.setObjectInCache(CACHE_KEYS.LAST_GEOFENCE, geofenceData);
-                                        startLocationUpdates().then().catch();
-                                        sessionState.setAppSession(true, geofenceData);
-                                        setProgress(false);
-                                    } catch (error: any) {
-                                        showToast(error.message);
-                                        setProgress(false);
-                                    }
-                                }}
-                                style={[{borderRadius: 10, marginTop: 10}]}>{'Start Geofencing'}</Button>
-                    </View>
                 </View>
-            </SafeAreaView>
+
+            </ScrollView>
+            <View style={[CommonStyles.bottom, {padding: 10}]}>
+                <TextInput
+                    style={{marginTop: 10}}
+                    mode={'outlined'}
+                    keyboardType={'numeric'}
+                    label="Radius  (in m)"
+                    value={radius}
+                    onChangeText={text => setRadius(text)}
+                />
+                <Button mode={'contained'}
+                        uppercase={true}
+                        onPress={async () => {
+                            if (await locationManager.hasGeofencingStarted()) {
+                                showToast('Geofencing already running');
+                            }
+                            if (isEmptyOrBlank(radius)) {
+                                showToast('Please enter radius');
+                                return;
+                            }
+                            setProgress(true);
+                            try {
+                                let rd = parseInt(radius);
+                                await locationManager.startGeofencing([{
+                                    latitude: geofenceData.latitude,
+                                    longitude: geofenceData.longitude,
+                                    radius: rd,
+                                    notifyOnEnter: true,
+                                    notifyOnExit: true,
+                                }]);
+                                setGeofenceStarted(true);
+                                await cache.setObjectInCache(CACHE_KEYS.LAST_GEOFENCE, geofenceData);
+                                await cache.setKeyInCache(CACHE_KEYS.GEOFENCE_ACCURACY,rd.toString());
+                                startLocationUpdates().then().catch();
+                                sessionState.setAppSession(true, geofenceData);
+                                setProgress(false);
+                            } catch (error: any) {
+                                showToast(error.message);
+                                setProgress(false);
+                            }
+                        }}
+                        style={[{borderRadius: 10, marginTop: 10}]}>{'Start Geofencing'}</Button>
+            </View>
         </KeyboardAvoidingView>
     );
 

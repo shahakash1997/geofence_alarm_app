@@ -1,12 +1,12 @@
 import * as Notifications from 'expo-notifications';
-import AppLocalStorage, {CACHE_KEYS} from "../cache/AppLocalStorage";
-import {SavedLocation} from "../models/models";
+import AppLocalStorage from "../cache/AppLocalStorage";
 
 
 const cache = AppLocalStorage.getInstance();
 
 export default class NotificationManager {
     private static instance: NotificationManager;
+    private notificationId: string | undefined;
 
     constructor() {
     }
@@ -18,7 +18,7 @@ export default class NotificationManager {
         return NotificationManager.instance;
     }
 
-    public async showNotification(type: string) {
+    public async showNotification(title: string, message: string) {
         Notifications.setNotificationHandler({
             handleNotification: async () => ({
                 shouldShowAlert: true,
@@ -26,15 +26,26 @@ export default class NotificationManager {
                 shouldSetBadge: true,
             }),
         });
-        const gLocation: SavedLocation = await cache.getObjectFromCache(CACHE_KEYS.LAST_GEOFENCE);
-        const notificationResult = await Notifications.scheduleNotificationAsync({
-            content: {
-                title: `Geofencing Updates`,
-                body: `You are ${type} the ${gLocation.name} region.`,
-            },
-            trigger: null,
-        });
-        console.log(notificationResult);
+        if (this.notificationId) {
+            await Notifications.scheduleNotificationAsync({
+                    identifier: this.notificationId,
+                    content: {
+                        title: title,
+                        body: message,
+                    },
+                    trigger: null,
+                }
+            )
+
+        } else {
+            this.notificationId = await Notifications.scheduleNotificationAsync({
+                content: {
+                    title: title,
+                    body: message,
+                },
+                trigger: null,
+            });
+        }
     }
 
 

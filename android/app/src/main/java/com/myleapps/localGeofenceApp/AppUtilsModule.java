@@ -34,13 +34,15 @@ class AppUtilsModule extends ReactContextBaseJavaModule {
     }
 
     @ReactMethod
-    public void showBannerAndPlaySound(Promise promise) {
+    public void showBannerAndPlaySound(Boolean sound, Boolean vibration, Promise promise) {
+        Intent intent = new Intent(this.mReactContext, GeofenceBannerService.class);
+        intent.putExtra("sound", sound);
+        intent.putExtra("vibration", vibration);
         try {
-            //todo show foreground service
             if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
-                this.mReactContext.startForegroundService(new Intent(this.mReactContext, GeofenceBannerService.class));
+                this.mReactContext.startForegroundService(intent);
             } else {
-                this.mReactContext.startService(new Intent(this.mReactContext, GeofenceBannerService.class));
+                this.mReactContext.startService(intent);
 
             }
             promise.resolve(true);

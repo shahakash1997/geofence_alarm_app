@@ -65,6 +65,25 @@ export default class LocationDB {
         );
         return resultSet.rows._array;
     }
+    public async getById(id:number): Promise<SavedLocation> {
+        const resultSet = await Database.executeQuery(
+            `SELECT * FROM ${SAVED_LOCATIONS_TABLE} where ${SL_COLUMN.id} = ?;`,
+            [id]
+        );
+        return resultSet.rows._array[0];
+    }
+
+    public async updateLocation(newLocation: SavedLocation): Promise<number> {
+        try {
+            const resultSet = await Database.executeQuery(
+                `UPDATE ${SAVED_LOCATIONS_TABLE} SET ${SL_COLUMN.name} = ?,${SL_COLUMN.latitude} = ?,${SL_COLUMN.longitude} = ?,${SL_COLUMN.updatedOn} = ?  WHERE ${SL_COLUMN.id} = ?;`,
+                [newLocation.name, newLocation.latitude, newLocation.longitude, new Date().valueOf(), newLocation.id]
+            );
+            return resultSet.rowsAffected;
+        } catch (error: any) {
+            return 0;
+        }
+    }
 
     public async deleteLocation(loc: SavedLocation): Promise<boolean> {
         try {

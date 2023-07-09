@@ -33,6 +33,10 @@
             android:name=".services.GeofenceBannerService"
             android:enabled="true"
             android:exported="true" />
+        <service
+            android:name=".services.GeofenceStopService"
+            android:enabled="true"
+            android:exported="true" />
 
         <meta-data
             android:name="expo.modules.updates.ENABLED"

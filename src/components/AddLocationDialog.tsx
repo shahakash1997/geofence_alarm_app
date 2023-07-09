@@ -16,14 +16,15 @@ export interface AddLocationDialog {
     visible: boolean
     hideDialog: () => void
     locationName?: string,
-    latitude?: string,
-    longitude?: string
+    latitude?: number,
+    longitude?: number
+    locationId?: number
 }
 
 const AddLocationDialog = (etProps: AddLocationDialog) => {
-    const [name, setName] = useState(etProps.locationName ?? '');
-    const [latitude, setLatitude] = useState(etProps.latitude ?? '');
-    const [longitude, setLongitude] = useState(etProps.longitude ?? '');
+    const [name, setName] = useState(etProps.locationName?.toString() ?? '');
+    const [latitude, setLatitude] = useState(etProps.latitude?.toString() ?? '');
+    const [longitude, setLongitude] = useState(etProps.longitude?.toString() ?? '');
     const [locationName, setLocationName] = useState('');
     const [btnLoading, setLoading] = useState(false);
 
@@ -78,40 +79,52 @@ const AddLocationDialog = (etProps: AddLocationDialog) => {
                         }>
                     Set Current Location
                 </Button>
-                <Button
-                    mode={'contained'}
-                    uppercase={false}
-                    labelStyle={CommonStyles.nextButtonLabel}
-                    style={[
-                        CommonStyles.nextButton,
-                        {
-                            marginTop: 20,
-                        },
-                    ]}
-                    onPress={async () => {
-                        try {
-                            if (name && parseFloat(latitude) && parseFloat(longitude)) {
-                                let savedLocation: SavedLocation;
-                                savedLocation = {
-                                    name: name,
-                                    id: new Date().valueOf(),
-                                    createdOn: new Date().valueOf(),
-                                    updatedOn: new Date().valueOf(),
-                                    latitude: parseFloat(latitude),
-                                    longitude: parseFloat(longitude)
+                <View style={{flexDirection: 'row', marginTop: 20}}>
+                    <Button
+                        mode={'outlined'}
+                        uppercase={false}
+                        labelStyle={CommonStyles.cancelButtonLabel}
+                        style={[CommonStyles.cancelButton, {flex: 1, marginEnd: 5}]}
+                        onPress={() => {
+                            etProps.hideDialog();
+                        }}
+                    >
+                        Cancel
+                    </Button>
+                    <Button
+                        mode={'contained'}
+                        uppercase={false}
+                        labelStyle={CommonStyles.nextButtonLabel}
+                        style={[CommonStyles.nextButton, {flex: 1, marginStart: 5}]}
+                        onPress={async () => {
+                            try {
+                                if (name && parseFloat(latitude) && parseFloat(longitude)) {
+                                    let savedLocation: SavedLocation;
+                                    savedLocation = {
+                                        name: name,
+                                        id: new Date().valueOf(),
+                                        createdOn: new Date().valueOf(),
+                                        updatedOn: new Date().valueOf(),
+                                        latitude: parseFloat(latitude),
+                                        longitude: parseFloat(longitude)
+                                    }
+                                    const db = await LocationDB.getInstance();
+                                    if (etProps.locationId) {
+                                        await db.updateLocation(savedLocation);
+                                    } else {
+                                        await db.insertSavedLocation(savedLocation);
+                                    }
+                                    etProps.hideDialog();
                                 }
-                                const db = await LocationDB.getInstance();
-                                await db.insertSavedLocation(savedLocation);
-                                etProps.hideDialog();
-                            }
 
-                        } catch (error: any) {
-                            showToast(error.message);
-                        }
-                    }}
-                >
-                    Save
-                </Button>
+                            } catch (error: any) {
+                                showToast(error.message);
+                            }
+                        }}
+                    >
+                        Save
+                    </Button>
+                </View>
             </KeyboardAvoidingView>
         </Modal>
 

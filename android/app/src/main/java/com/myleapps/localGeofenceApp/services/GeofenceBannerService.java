@@ -7,10 +7,12 @@ import android.app.Service;
 import android.content.Context;
 import android.content.Intent;
 import android.graphics.PixelFormat;
-import android.media.MediaPlayer;
+import android.net.Uri;
 import android.os.Build;
 import android.os.IBinder;
 import android.os.PowerManager;
+import android.os.VibrationEffect;
+import android.os.Vibrator;
 import android.view.Gravity;
 import android.view.LayoutInflater;
 import android.view.MotionEvent;
@@ -21,22 +23,26 @@ import android.widget.Button;
 import android.widget.Toast;
 
 import androidx.core.app.NotificationCompat;
+import androidx.media3.common.MediaItem;
+import androidx.media3.common.MimeTypes;
+import androidx.media3.common.Player;
+import androidx.media3.datasource.DefaultDataSource;
 import androidx.media3.exoplayer.ExoPlayer;
-import androidx.media3.exoplayer.SimpleExoPlayer;
+import androidx.media3.exoplayer.source.MediaSource;
+import androidx.media3.exoplayer.source.ProgressiveMediaSource;
 
 import com.myleapps.localGeofenceApp.MainActivity;
 import com.myleapps.localGeofenceApp.R;
 import com.myleapps.localGeofenceApp.utils.Logger;
 
-public class GeofenceBannerService extends Service implements MediaPlayer.OnErrorListener, MediaPlayer.OnPreparedListener {
+public class GeofenceBannerService extends Service {
     private static final String TAG = "GeofenceBannerService";
     private WindowManager mWindowManager;
     private View mGeofenceBannerView;
-    private MediaPlayer mediaPlayer;
     private ExoPlayer exoPlayer;
-
-    private static final String ACTION_PLAY = "com.example.action.PLAY";
-
+    private Vibrator vibrator;
+    private Boolean playSound = true;
+    private Boolean vibrationEnabled = true;
 
     public GeofenceBannerService() {
         Logger.debug(TAG, "GeofenceBannerService : ");
@@ -78,6 +84,7 @@ public class GeofenceBannerService extends Service implements MediaPlayer.OnErro
         Logger.debug(TAG, "onCreate : ");
         makeForegorund();
         initMediaPlayer();
+        vibrator = (Vibrator) getSystemService(Context.VIBRATOR_SERVICE);
         mGeofenceBannerView = LayoutInflater.from(this).inflate(R.layout.geofence_banner, null);
         int LAYOUT_FLAG;
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
@@ -104,17 +111,19 @@ public class GeofenceBannerService extends Service implements MediaPlayer.OnErro
 
     private void initMediaPlayer() {
         Logger.debug(TAG, "initMediaPlayer : ");
-        mediaPlayer = new MediaPlayer();
-        mediaPlayer.setWakeMode(getApplicationContext(), PowerManager.PARTIAL_WAKE_LOCK);
-        mediaPlayer.setOnErrorListener(this);
-        mediaPlayer.setOnPreparedListener(this);
+        exoPlayer = new ExoPlayer.Builder(getApplicationContext())
+                .build();
+        exoPlayer.setWakeMode(PowerManager.PARTIAL_WAKE_LOCK);
     }
 
     @Override
     public int onStartCommand(Intent intent, int flags, int startId) {
         Logger.debug(TAG, "onStartCommand : ");
         makeForegorund();
+        playSound = intent.getBooleanExtra("sound", true);
+        vibrationEnabled = intent.getBooleanExtra("vibration", true);
         playSound();
+        startVibration();
         return super.onStartCommand(intent, flags, startId);
     }
 
@@ -169,16 +178,38 @@ public class GeofenceBannerService extends Service implements MediaPlayer.OnErro
         final Button button = mGeofenceBannerView.findViewById(R.id.close_btn);
         button.setOnClickListener(v -> {
             Toast.makeText(this, "Service Stopped!", Toast.LENGTH_SHORT).show();
+            Intent service = new Intent(getApplicationContext(), GeofenceStopService.class);
+            getApplicationContext().startService(service);
             stopSelf();
         });
     }
 
     private void playSound() {
-        this.mediaPlayer = MediaPlayer.create(getApplicationContext(), R.raw.sound);
-        this.mediaPlayer.start();
+        if (playSound) {
+            String audioFilePath = "android.resource://" + getPackageName() + "/" + R.raw.sound;
+            // Create an instance of the ExoPlayer
+            MediaItem mediaItem = new MediaItem.Builder()
+                    .setUri(Uri.parse(audioFilePath))
+                    .setMimeType(MimeTypes.BASE_TYPE_AUDIO)
+                    .build();
+            MediaSource mediaSource = new ProgressiveMediaSource.Factory(new DefaultDataSource.Factory(getApplicationContext())).createMediaSource(mediaItem);
+            exoPlayer.setMediaSource(mediaSource);
+            exoPlayer.setPlayWhenReady(true);
+            exoPlayer.prepare();
+            exoPlayer.setRepeatMode(Player.REPEAT_MODE_ALL);
+        }
+    }
 
-
-
+    private void startVibration() {
+        if (vibrationEnabled) {
+            long[] pattern = {0, 100, 1000};
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+                vibrator.vibrate(VibrationEffect.createWaveform(pattern, 0));
+            } else {
+                //deprecated in API 26
+                vibrator.vibrate(pattern, 0);
+            }
+        }
     }
 
 
@@ -187,21 +218,9 @@ public class GeofenceBannerService extends Service implements MediaPlayer.OnErro
         Logger.debug(TAG, "onDestroy : ");
         super.onDestroy();
         if (mGeofenceBannerView != null) mWindowManager.removeView(mGeofenceBannerView);
-        mediaPlayer.release();
-        mediaPlayer = null;
+        exoPlayer.release();
+        vibrator.cancel();
+        exoPlayer = null;
     }
 
-    @Override
-    public boolean onError(MediaPlayer mp, int what, int extra) {
-        Logger.debug(TAG, "onError : ");
-        mp.stop();
-        return false;
-    }
-
-    @Override
-    public void onPrepared(MediaPlayer mp) {
-        Logger.debug(TAG, "onPrepared : ");
-        mp.start();
-
-    }
 }

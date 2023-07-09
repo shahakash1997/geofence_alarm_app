@@ -62,6 +62,7 @@ export default class LocationManager {
     }
 
     public async stopGeofencing() {
+        console.log('stopGeofencing');
         await Location.stopGeofencingAsync(GEOFENCE_TASK_NAME);
     }
 
@@ -81,6 +82,7 @@ export default class LocationManager {
     }
 
     public async stopLocationUpdates() {
+        console.log('stopLocationUpdates')
         await Location.stopLocationUpdatesAsync(LOCATION_UPDATES);
     }
 

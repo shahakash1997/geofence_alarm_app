@@ -76,7 +76,6 @@ export const CommonStyles = StyleSheet.create({
         fontWeight: '600',
     },
     cancelButton: {
-        borderWidth: 1,
         borderColor: SdkColors[ColorTheme.LIGHT].primaryButton,
     },
     cancelButtonLabel: {

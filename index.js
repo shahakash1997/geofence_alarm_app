@@ -4,10 +4,13 @@ import App from './App';
 import * as TaskManager from "expo-task-manager";
 import {GEOFENCE_TASK_NAME, LOCATION_UPDATES} from "./src/constants/constant";
 import {showToast} from "./src/components/Toaster";
-import {vibrate} from "./src/utils/utils";
+import {checkNewDistance, vibrate} from "./src/utils/utils";
 import {GeofencingEventType} from "expo-location";
 import NotificationManager from "./src/utils/NotificationManager";
 import {showBannerSound} from "./src/utils/NativeUtils";
+import AppLocalStorage, {CACHE_KEYS} from "./src/cache/AppLocalStorage";
+import {AppRegistry} from "react-native";
+import LocationManager from "./src/utils/LocationManager";
 
 registerRootComponent(App);
 TaskManager.defineTask(LOCATION_UPDATES, ({data: {locations}, error}) => {
@@ -15,7 +18,7 @@ TaskManager.defineTask(LOCATION_UPDATES, ({data: {locations}, error}) => {
         showToast(error.message)
         return;
     }
-    //todo
+    checkNewDistance(locations).then().catch();
     console.log('Received new locations', locations);
 });
 
@@ -28,7 +31,8 @@ TaskManager.defineTask(
         else
             titleType = "Exiting"
 
-        await NotificationManager.getInstance().showNotification(titleType);
+        const gLocation = await AppLocalStorage.getInstance().getObjectFromCache(CACHE_KEYS.LAST_GEOFENCE);
+        await NotificationManager.getInstance().showNotification('Geofence Updates', `You are ${titleType} the ${gLocation.name} region.`);
         await vibrate();
         if (error) {
             // check `error.message` for more details.
@@ -43,3 +47,15 @@ TaskManager.defineTask(
         }
     },
 );
+
+AppRegistry.registerHeadlessTask('STOP_GEOFENCING', () => {
+    console.log('Called Background Headless service!')
+    showToast('Stopping Services...')
+    Promise.all([LocationManager.getInstance().stopLocationUpdates,
+        LocationManager.getInstance().stopGeofencing]).then(() => {
+        console.log('Geofencing and Location Updates stopped By Headless service!');
+        showToast('Geofencing stopped. Thanks');
+    }).catch(error => {
+        console.log(error);
+    });
+});

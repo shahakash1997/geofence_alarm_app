@@ -1,6 +1,5 @@
 import React, {useEffect, useState} from "react";
 import {SafeAreaView, StyleSheet, View} from "react-native";
-import {SavedLocation} from "../models/models";
 import {FlashList} from "@shopify/flash-list";
 import {AnimatedFAB, Chip, Text} from "react-native-paper";
 import AddLocationDialog from "../components/AddLocationDialog";
@@ -22,12 +21,12 @@ const handleEmpty = () => {
 const locationManager = LocationManager.getInstance();
 const cache = AppLocalStorage.getInstance();
 const HomeScreen = ({navigation}: any) => {
-    const [locations, setLocations] = useState<SavedLocation[]>([]);
     const [visible, setVisible] = useState(true);
     const [isExtended, setExtended] = useState(false);
     const [dialog, setDialog] = useState(false);
     const [snackVisible, setSnackVisible] = useState<boolean>(false);
     const sessionState = useGlobalSessionState();
+    const [menu, showMenu] = useState(false);
     const [listRefreshing, setListRefreshing] = useState(false);
 
 
@@ -38,13 +37,13 @@ const HomeScreen = ({navigation}: any) => {
             if (lastLocation) {
                 sessionState.setAppSession(true, lastLocation);
             }
+            await updateList();
         })();
     }, []);
     const updateList = async () => {
         const db = await LocationDB.getInstance();
         const locations = await db.getAllLocations();
-        setLocations(locations);
-
+        sessionState.setSavedLocations(locations);
     };
 
     useEffect(() => {
@@ -69,7 +68,7 @@ const HomeScreen = ({navigation}: any) => {
                     }}
                     refreshing={listRefreshing}
                     ListEmptyComponent={handleEmpty}
-                    data={locations}
+                    data={sessionState.getSavedLocations()}
                     renderItem={({item}) => <LocationItem data={item} onClick={async (item) => {
                         const lg = await cache.getObjectFromCache(CACHE_KEYS.LAST_GEOFENCE);
                         if (await locationManager.hasGeofencingStarted() && lg) {
