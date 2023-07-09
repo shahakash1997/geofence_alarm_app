@@ -17,7 +17,7 @@ const MainRouter = () => {
                              headerShown: true,
                          }}>
             <Stack.Screen options={{
-                headerShown: true,
+                headerShown: false,
                 title: 'Saved Locations',
             }} name={Routes.HomeScreen} component={HomeScreen}/>
             <Stack.Screen name="Notifications" component={NotificationScreen}/>

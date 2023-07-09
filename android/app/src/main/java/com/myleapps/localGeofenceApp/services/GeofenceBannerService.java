@@ -31,6 +31,7 @@ import androidx.media3.exoplayer.ExoPlayer;
 import androidx.media3.exoplayer.source.MediaSource;
 import androidx.media3.exoplayer.source.ProgressiveMediaSource;
 
+import com.facebook.react.HeadlessJsTaskService;
 import com.myleapps.localGeofenceApp.MainActivity;
 import com.myleapps.localGeofenceApp.R;
 import com.myleapps.localGeofenceApp.utils.Logger;
@@ -180,6 +181,7 @@ public class GeofenceBannerService extends Service {
             Toast.makeText(this, "Service Stopped!", Toast.LENGTH_SHORT).show();
             Intent service = new Intent(getApplicationContext(), GeofenceStopService.class);
             getApplicationContext().startService(service);
+            HeadlessJsTaskService.acquireWakeLockNow(getApplicationContext());
             stopSelf();
         });
     }
@@ -202,7 +204,7 @@ public class GeofenceBannerService extends Service {
 
     private void startVibration() {
         if (vibrationEnabled) {
-            long[] pattern = {0, 100, 1000};
+            long[] pattern = new long[]{0, 400, 800, 600, 800, 800, 800, 1000};
             if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
                 vibrator.vibrate(VibrationEffect.createWaveform(pattern, 0));
             } else {

@@ -9,7 +9,7 @@ import {GeofencingEventType} from "expo-location";
 import NotificationManager from "./src/utils/NotificationManager";
 import {showBannerSound} from "./src/utils/NativeUtils";
 import AppLocalStorage, {CACHE_KEYS} from "./src/cache/AppLocalStorage";
-import {AppRegistry} from "react-native";
+import {AppRegistry, DeviceEventEmitter} from "react-native";
 import LocationManager from "./src/utils/LocationManager";
 
 registerRootComponent(App);
@@ -48,14 +48,12 @@ TaskManager.defineTask(
     },
 );
 
-AppRegistry.registerHeadlessTask('STOP_GEOFENCING', () => {
-    console.log('Called Background Headless service!')
-    showToast('Stopping Services...')
-    Promise.all([LocationManager.getInstance().stopLocationUpdates,
-        LocationManager.getInstance().stopGeofencing]).then(() => {
-        console.log('Geofencing and Location Updates stopped By Headless service!');
-        showToast('Geofencing stopped. Thanks');
-    }).catch(error => {
-        console.log(error);
-    });
-});
+AppRegistry.registerHeadlessTask('STOP_GEOFENCING', () => StopGeofencingHeadlessTask);
+const StopGeofencingHeadlessTask = async () => {
+    console.log('Called Background Headless service!');
+    await LocationManager.getInstance().stopLocationUpdates();
+    await LocationManager.getInstance().stopGeofencing();
+    console.log('Geofencing and Location Updates stopped By Headless service!');
+    DeviceEventEmitter.emit('APP_UPDATES', []);
+
+};

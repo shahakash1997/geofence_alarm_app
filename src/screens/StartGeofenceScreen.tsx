@@ -1,5 +1,5 @@
 import React, {useCallback, useEffect, useRef, useState} from "react";
-import {KeyboardAvoidingView, SafeAreaView, ScrollView, View} from "react-native";
+import {DeviceEventEmitter, KeyboardAvoidingView, SafeAreaView, ScrollView, View} from "react-native";
 import {Button, Card, Text, TextInput} from "react-native-paper";
 import {showToast} from "../components/Toaster";
 import {CommonStyles, Fonts} from "../styles/CommonStyles";
@@ -14,7 +14,6 @@ import {getDistance} from "../utils/NativeUtils";
 import {useGlobalSessionState} from "../cache/AppState";
 import LocationDB from "../database/LocationDB";
 import {useNavigation} from "@react-navigation/native";
-import AddLocationDialog from "../components/AddLocationDialog";
 
 
 const cache = AppLocalStorage.getInstance();
@@ -31,11 +30,25 @@ const StartGeofenceScreen = (props: any) => {
     const sessionState = useGlobalSessionState();
     const navigator = useNavigation();
     const [editDialog, setEditDialog] = useState(false);
-
     const [locationName, setLocationName] = useState('');
 
+
     useEffect(() => {
+        DeviceEventEmitter.addListener('APP_UPDATES', async () => {
+            console.log('Updates....');
+            const started = await locationManager.hasGeofencingStarted();
+            setGeofenceStarted(started);
+            if (!started)
+                sessionState.setAppSession(started, null);
+        });
         (async () => {
+                const started = await locationManager.hasGeofencingStarted();
+                setGeofenceStarted(started);
+                if (started) {
+                    await startLocationUpdates();
+                } else {
+                    sessionState.setAppSession(false, null);
+                }
                 console.log(geofenceData);
                 const address = await locationManager.getAddress(geofenceData.latitude, geofenceData.longitude);
                 setLocationName(getStringAddress(address));
@@ -70,17 +83,6 @@ const StartGeofenceScreen = (props: any) => {
         await cache.setObjectInCache(CACHE_KEYS.LAST_GEOFENCE, null);
         sessionState.setAppSession(false, null);
 
-    }, []);
-
-
-    useEffect(() => {
-        (async () => {
-            const started = await locationManager.hasGeofencingStarted();
-            setGeofenceStarted(started);
-            if (started) {
-                await startLocationUpdates();
-            }
-        })();
     }, []);
     if (geofenceStarted) {
         return (<SafeAreaView style={CommonStyles.mainContainer}>
@@ -198,7 +200,7 @@ const StartGeofenceScreen = (props: any) => {
                                 }]);
                                 setGeofenceStarted(true);
                                 await cache.setObjectInCache(CACHE_KEYS.LAST_GEOFENCE, geofenceData);
-                                await cache.setKeyInCache(CACHE_KEYS.GEOFENCE_ACCURACY,rd.toString());
+                                await cache.setKeyInCache(CACHE_KEYS.GEOFENCE_ACCURACY, rd.toString());
                                 startLocationUpdates().then().catch();
                                 sessionState.setAppSession(true, geofenceData);
                                 setProgress(false);

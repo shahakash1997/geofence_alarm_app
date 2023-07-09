@@ -9,9 +9,7 @@ export interface AppSideMenuProps {
 
 const AppSideMenu = (props: AppSideMenuProps) => {
     const [visible, setVisible] = React.useState(false);
-
     const openMenu = () => setVisible(true);
-
     const closeMenu = () => setVisible(false);
 
     return (

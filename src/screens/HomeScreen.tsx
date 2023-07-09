@@ -1,7 +1,7 @@
 import React, {useEffect, useState} from "react";
-import {SafeAreaView, StyleSheet, View} from "react-native";
+import {DeviceEventEmitter, Platform, SafeAreaView, StyleSheet, View} from "react-native";
 import {FlashList} from "@shopify/flash-list";
-import {AnimatedFAB, Chip, Text} from "react-native-paper";
+import {AnimatedFAB, Appbar, Chip, Text} from "react-native-paper";
 import AddLocationDialog from "../components/AddLocationDialog";
 import LocationDB from "../database/LocationDB";
 import LocationItem from "../components/LocationItem";
@@ -17,6 +17,8 @@ const handleEmpty = () => {
     return (
         <Text style={[AppStylesSecondary.titleText, {fontSize: 20, padding: 20}]}>{' No locations present!'}</Text>);
 };
+const MORE_ICON = Platform.OS === 'ios' ? 'dots-horizontal' : 'dots-vertical';
+
 
 const locationManager = LocationManager.getInstance();
 const cache = AppLocalStorage.getInstance();
@@ -32,10 +34,17 @@ const HomeScreen = ({navigation}: any) => {
 
     //when app is opened for first time
     useEffect(() => {
+        DeviceEventEmitter.addListener('APP_UPDATES', async () => {
+            const started = await locationManager.hasGeofencingStarted();
+            if (!started)
+                sessionState.setAppSession(started, null);
+        });
         (async () => {
             const lastLocation = await cache.getObjectFromCache(CACHE_KEYS.LAST_GEOFENCE);
-            if (lastLocation) {
+            if (lastLocation && await LocationManager.getInstance().hasGeofencingStarted()) {
                 sessionState.setAppSession(true, lastLocation);
+            } else {
+                sessionState.setAppSession(false, null);
             }
             await updateList();
         })();
@@ -54,6 +63,12 @@ const HomeScreen = ({navigation}: any) => {
 
     return (
         <SafeAreaView style={styles.container}>
+            <Appbar.Header>
+                <Appbar.Content title="Saved Locations"/>
+                <Appbar.Action icon="tools" onPress={() => {
+                    navigation.navigate(Routes.SETTINGS_SCREEN);
+                }}/>
+            </Appbar.Header>
             <View style={{flex: 1}}>
                 {sessionState.isGeofenceRunning() && sessionState.getGeofenceData() &&
                     <Chip icon="information" onPress={() => console.log('Pressed')}>
