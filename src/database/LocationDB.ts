@@ -65,7 +65,8 @@ export default class LocationDB {
         );
         return resultSet.rows._array;
     }
-    public async getById(id:number): Promise<SavedLocation> {
+
+    public async getById(id: number): Promise<SavedLocation> {
         const resultSet = await Database.executeQuery(
             `SELECT * FROM ${SAVED_LOCATIONS_TABLE} where ${SL_COLUMN.id} = ?;`,
             [id]
@@ -73,15 +74,16 @@ export default class LocationDB {
         return resultSet.rows._array[0];
     }
 
-    public async updateLocation(newLocation: SavedLocation): Promise<number> {
+    public async updateLocation(newLocation: SavedLocation, id: number): Promise<boolean> {
         try {
             const resultSet = await Database.executeQuery(
-                `UPDATE ${SAVED_LOCATIONS_TABLE} SET ${SL_COLUMN.name} = ?,${SL_COLUMN.latitude} = ?,${SL_COLUMN.longitude} = ?,${SL_COLUMN.updatedOn} = ?  WHERE ${SL_COLUMN.id} = ?;`,
-                [newLocation.name, newLocation.latitude, newLocation.longitude, new Date().valueOf(), newLocation.id]
+                `UPDATE ${SAVED_LOCATIONS_TABLE} SET ${SL_COLUMN.name} = ?,${SL_COLUMN.latitude} = ?,${SL_COLUMN.longitude} = ?,${SL_COLUMN.updatedOn} = ?  WHERE id = ?;`,
+                [newLocation.name, newLocation.latitude, newLocation.longitude, new Date().valueOf(), id]
             );
-            return resultSet.rowsAffected;
+            return resultSet.rowsAffected >= 1;
         } catch (error: any) {
-            return 0;
+            console.log(error.message)
+            return false;
         }
     }
 
@@ -91,7 +93,7 @@ export default class LocationDB {
                 `DELETE FROM ${SAVED_LOCATIONS_TABLE} WHERE ${SL_COLUMN.id} = ?;`,
                 [loc.id]
             );
-            return true;
+            return resultSet.rowsAffected >= 1;
         } catch (error: any) {
             return false;
         }

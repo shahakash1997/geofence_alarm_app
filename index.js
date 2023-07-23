@@ -35,7 +35,6 @@ TaskManager.defineTask(
         await NotificationManager.getInstance().showNotification('Geofence Updates', `You are ${titleType} the ${gLocation.name} region.`);
         await vibrate();
         if (error) {
-            // check `error.message` for more details.
             console.log(error);
             return;
         }

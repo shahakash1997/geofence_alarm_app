@@ -7,10 +7,9 @@ import {showToast} from "./Toaster";
 import {SavedLocation} from "../models/models";
 import LocationDB from "../database/LocationDB";
 import LocationManager from "../utils/LocationManager";
+import {checkCoords, checkIfLocationAlreadyAdded} from "../utils/utils";
 
-
-const locationManager = LocationManager.getInstance();
-
+LocationManager.getInstance();
 
 export interface AddLocationDialog {
     visible: boolean
@@ -37,7 +36,7 @@ const AddLocationDialog = (etProps: AddLocationDialog) => {
         >
             <KeyboardAvoidingView style={[styles.wrapper]}>
                 <Title style={[styles.title, {color: 'grey'}]}>
-                    {'Add new Location'}
+                    {etProps.locationId ? 'Edit Location' : 'Add new Location'}
                 </Title>
                 <Paragraph>
                     {'Please Enter correct Location upto 4 decimal places'}
@@ -109,14 +108,22 @@ const AddLocationDialog = (etProps: AddLocationDialog) => {
                                         longitude: parseFloat(longitude)
                                     }
                                     const db = await LocationDB.getInstance();
+                                    if (!checkCoords(savedLocation.latitude, savedLocation.longitude)) {
+                                        showToast('Invalid latitude or longitude!');
+                                        return;
+                                    }
                                     if (etProps.locationId) {
-                                        await db.updateLocation(savedLocation);
+                                        console.log('Updated location')
+                                        await db.updateLocation(savedLocation,etProps.locationId);
                                     } else {
+                                        if (await checkIfLocationAlreadyAdded(savedLocation, db)) {
+                                            showToast('Location already present');
+                                            return;
+                                        }
                                         await db.insertSavedLocation(savedLocation);
                                     }
                                     etProps.hideDialog();
                                 }
-
                             } catch (error: any) {
                                 showToast(error.message);
                             }

@@ -1,5 +1,5 @@
 import React, {useCallback, useEffect, useRef, useState} from "react";
-import {DeviceEventEmitter, KeyboardAvoidingView, SafeAreaView, ScrollView, View} from "react-native";
+import {DeviceEventEmitter, SafeAreaView, ScrollView, View} from "react-native";
 import {Button, Card, Text, TextInput} from "react-native-paper";
 import {showToast} from "../components/Toaster";
 import {CommonStyles, Fonts} from "../styles/CommonStyles";
@@ -14,6 +14,7 @@ import {getDistance} from "../utils/NativeUtils";
 import {useGlobalSessionState} from "../cache/AppState";
 import LocationDB from "../database/LocationDB";
 import {useNavigation} from "@react-navigation/native";
+import AddLocationDialog from "../components/AddLocationDialog";
 
 
 const cache = AppLocalStorage.getInstance();
@@ -23,7 +24,7 @@ const StartGeofenceScreen = (props: any) => {
     const animation = useRef(null);
     const [radius, setRadius] = useState('');
     const [progress, setProgress] = useState(false);
-    const geofenceData: SavedLocation = props.route.params;
+    const [geofenceData, setGeofenceData] = useState<SavedLocation>(props.route.params);
     const [geofenceStarted, setGeofenceStarted] = useState(false);
     const [location, setLocation] = useState<LocationObject>();
     const [distance, setDistance] = useState<string>('');
@@ -49,9 +50,7 @@ const StartGeofenceScreen = (props: any) => {
                 } else {
                     sessionState.setAppSession(false, null);
                 }
-                console.log(geofenceData);
-                const address = await locationManager.getAddress(geofenceData.latitude, geofenceData.longitude);
-                setLocationName(getStringAddress(address));
+                setLocationName(await getStringAddress(geofenceData));
             }
         )();
     }, []);
@@ -128,7 +127,7 @@ const StartGeofenceScreen = (props: any) => {
             </View>
         </SafeAreaView>);
     } else return (
-        <KeyboardAvoidingView style={{flex: 1}}>
+        <SafeAreaView style={{flex: 1}}>
             <ScrollView style={{flex: 1}}>
                 <ProgressDialog visible={progress} label={'Please wait...'}/>
                 <View style={{flex: 1, padding: 10, flexDirection: 'column'}}>
@@ -211,7 +210,20 @@ const StartGeofenceScreen = (props: any) => {
                         }}
                         style={[{borderRadius: 10, marginTop: 10}]}>{'Start Geofencing'}</Button>
             </View>
-        </KeyboardAvoidingView>
+            <AddLocationDialog
+                locationName={geofenceData.name}
+                latitude={geofenceData.latitude}
+                longitude={geofenceData.longitude}
+                locationId={geofenceData.id}
+                visible={editDialog} hideDialog={async () => {
+                setEditDialog(false);
+                const db = await LocationDB.getInstance();
+                const newLoc: SavedLocation = await db.getById(geofenceData.id);
+                if (newLoc) {
+                    setGeofenceData(newLoc);
+                }
+            }}/>
+        </SafeAreaView>
     );
 
 };

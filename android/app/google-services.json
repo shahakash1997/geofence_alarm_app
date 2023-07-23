@@ -1,0 +1,48 @@
+{
+  "project_info": {
+    "project_number": "929054467726",
+    "project_id": "myle-apps",
+    "storage_bucket": "myle-apps.appspot.com"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:929054467726:android:08f7a9d8588bf379480bdf",
+        "android_client_info": {
+          "package_name": "com.myleapps.localGeofenceApp"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyBo6zps6KM2N7qnGseKDHGwWJHlNVo0Exg"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    },
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:929054467726:android:6c7505e1f9836d8f480bdf",
+        "android_client_info": {
+          "package_name": "com.myleapps.myutilsapp"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyBo6zps6KM2N7qnGseKDHGwWJHlNVo0Exg"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
