@@ -7,7 +7,8 @@ export const CACHE_KEYS = {
     LAST_GEOFENCE: 'LAST_GEOFENCE',
     GEOFENCE_ACCURACY: 'GEOFENCE_ACCURACY',
     SOUND_ENABLED: 'SOUND_ENABLED',
-    VIBRATION_ENABLED: 'VIBRATION_ENABLED'
+    VIBRATION_ENABLED: 'VIBRATION_ENABLED',
+    LAST_UPDATED:'LAST_UPDATED'
 };
 export default class AppLocalStorage {
     private storage: Storage = Storage.getInstance();

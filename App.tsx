@@ -1,9 +1,11 @@
 import 'react-native-gesture-handler';
-import React, {useEffect} from "react";
+import React, {useEffect, useState} from "react";
 import {showToast} from "./src/components/Toaster";
 import {NavigationContainer} from '@react-navigation/native';
 import LocationManager from "./src/utils/LocationManager";
 import Main from "./src/screens/Main";
+import auth from '@react-native-firebase/auth';
+
 import {
     IBMPlexSans_100Thin,
     IBMPlexSans_100Thin_Italic,
@@ -22,6 +24,7 @@ import {
     useFonts
 } from "@expo-google-fonts/ibm-plex-sans";
 import ProgressDialog from "./src/widgets/ProgressDialog";
+import {firebaseSignIn} from "./src/utils/firebase";
 
 
 const locationManager = LocationManager.getInstance();
@@ -42,8 +45,23 @@ export default function App() {
         IBMPlexSans_600SemiBold_Italic,
         IBMPlexSans_700Bold_Italic,
     });
+    const [initializing, setInitializing] = useState(true);
+    const [user, setUser] = useState<any>();
+
+    // Handle user state changes
+    function onAuthStateChanged(user: any) {
+        setUser(user);
+        if (initializing) setInitializing(false);
+    }
+
+    useEffect(() => {
+        firebaseSignIn().then().catch();
+        return auth().onAuthStateChanged(onAuthStateChanged);
+    }, []);
+
     useEffect(() => {
         (async () => {
+            setUser({});
             const isLocationEnabled = locationManager.isLocationServicesEnabled();
             if (!isLocationEnabled) {
                 showToast(
@@ -54,7 +72,7 @@ export default function App() {
         })();
     }, []);
 
-    if (!fontsLoaded) {
+    if (!fontsLoaded || initializing) {
         return <ProgressDialog visible={true} label={'Please wait...'}/>;
     } else {
         return (

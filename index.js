@@ -19,7 +19,6 @@ TaskManager.defineTask(LOCATION_UPDATES, ({data: {locations}, error}) => {
         return;
     }
     checkNewDistance(locations).then().catch();
-    console.log('Received new locations', locations);
 });
 
 TaskManager.defineTask(
@@ -49,10 +48,8 @@ TaskManager.defineTask(
 
 AppRegistry.registerHeadlessTask('STOP_GEOFENCING', () => StopGeofencingHeadlessTask);
 const StopGeofencingHeadlessTask = async () => {
-    console.log('Called Background Headless service!');
     await LocationManager.getInstance().stopLocationUpdates();
     await LocationManager.getInstance().stopGeofencing();
-    console.log('Geofencing and Location Updates stopped By Headless service!');
     DeviceEventEmitter.emit('APP_UPDATES', []);
 
 };

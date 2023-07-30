@@ -11,7 +11,11 @@ import LocationManager from "../utils/LocationManager";
 import AppLocalStorage, {CACHE_KEYS} from "../cache/AppLocalStorage";
 import SnackbarCustom from "../widgets/SnackbarCustom";
 import {useGlobalSessionState} from "../cache/AppState";
+import {AppAutoUpdateUtils, AppUpdateResponse} from "../utils/AppAutoUpdateUtils";
+import AppUpdate from "../components/AppUpdate";
 
+
+const appUpdateUtils = new AppAutoUpdateUtils();
 
 const handleEmpty = () => {
     return (
@@ -30,6 +34,24 @@ const HomeScreen = ({navigation}: any) => {
     const sessionState = useGlobalSessionState();
     const [menu, showMenu] = useState(false);
     const [listRefreshing, setListRefreshing] = useState(false);
+    const [appUpdateLink, setAppUpdateLink] = useState<AppUpdateResponse>();
+    const [updateDialog, setUpdateDialog] = useState(false);
+
+    // Use Effect for app updates
+    useEffect(() => {
+        (async () => {
+            const updateDetails = await appUpdateUtils.getUpdateDetails();
+            const lastUpdated = await cache.getKeyFromCache(CACHE_KEYS.LAST_UPDATED);
+            if (lastUpdated && lastUpdated === new Date().toLocaleDateString()) {
+                console.log('App already updated today');
+            } else {
+                if (updateDetails) {
+                    setAppUpdateLink(updateDetails);
+                    setUpdateDialog(true);
+                }
+            }
+        })();
+    }, []);
 
 
     //when app is opened for first time
@@ -112,6 +134,12 @@ const HomeScreen = ({navigation}: any) => {
                 await updateList();
                 setDialog(false);
             }}/>
+            {
+                appUpdateLink &&
+                <AppUpdate downloadLink={appUpdateLink.appURL} version={appUpdateLink.version} hideDialog={() => {
+                    setUpdateDialog(false);
+                }} visible={updateDialog}/>
+            }
 
             <SnackbarCustom
                 message={`Geofence is already runnning. Kindly stop ${sessionState.getGeofenceData()?.name} first!`}
