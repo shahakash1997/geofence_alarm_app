@@ -11,6 +11,7 @@ import com.facebook.react.bridge.ReactApplicationContext;
 import com.facebook.react.bridge.ReactContextBaseJavaModule;
 import com.facebook.react.bridge.ReactMethod;
 import com.myleapps.localGeofenceApp.services.GeofenceBannerService;
+import com.myleapps.localGeofenceApp.utils.Utils;
 
 class AppUtilsModule extends ReactContextBaseJavaModule {
     private static String MODULE_NAME = "AppUtilsModule";
@@ -59,4 +60,17 @@ class AppUtilsModule extends ReactContextBaseJavaModule {
     public String getName() {
         return MODULE_NAME;
     }
+
+
+    @ReactMethod
+    public void openAndInstallApk(String apkUri, Promise promise) {
+        try {
+            Utils.openAPKFile(apkUri, mReactContext);
+            promise.resolve(true);
+        } catch (Exception exception) {
+            promise.reject(exception);
+        }
+    }
+
+
 }
