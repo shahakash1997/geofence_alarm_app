@@ -41,14 +41,12 @@ const HomeScreen = ({navigation}: any) => {
     useEffect(() => {
         (async () => {
             const updateDetails = await appUpdateUtils.getUpdateDetails();
+            console.log(updateDetails);
             const lastUpdated = await cache.getKeyFromCache(CACHE_KEYS.LAST_UPDATED);
-            if (lastUpdated && lastUpdated === new Date().toLocaleDateString()) {
-                console.log('App already updated today');
-            } else {
-                if (updateDetails) {
-                    setAppUpdateLink(updateDetails);
-                    setUpdateDialog(true);
-                }
+            if (!lastUpdated) return;
+            if (updateDetails) {
+                setAppUpdateLink(updateDetails);
+                setUpdateDialog(true);
             }
         })();
     }, []);

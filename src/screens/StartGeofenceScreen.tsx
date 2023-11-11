@@ -36,7 +36,6 @@ const StartGeofenceScreen = (props: any) => {
 
     useEffect(() => {
         DeviceEventEmitter.addListener('APP_UPDATES', async () => {
-            console.log('Updates....');
             const started = await locationManager.hasGeofencingStarted();
             setGeofenceStarted(started);
             if (!started)
@@ -46,6 +45,8 @@ const StartGeofenceScreen = (props: any) => {
                 const started = await locationManager.hasGeofencingStarted();
                 setGeofenceStarted(started);
                 if (started) {
+                    const rad = await cache.getKeyFromCache(CACHE_KEYS.GEOFENCE_ACCURACY);
+                    setRadius(rad ?? '');
                     await startLocationUpdates();
                 } else {
                     sessionState.setAppSession(false, null);
@@ -92,12 +93,18 @@ const StartGeofenceScreen = (props: any) => {
                         <Text style={{
                             fontSize: 20,
                             fontFamily: Fonts.IBMPlexSans_600SemiBold
-                        }}>{'Current Location'}</Text>
+                        }}>{'Current Location 📍'}</Text>
                         <Text
                             style={{
                                 fontFamily: Fonts.IBMPlexSans_700Bold_Italic,
                                 fontSize: 25, textAlign: 'center'
                             }}>{`${location?.coords.latitude.toFixed(2)},${location?.coords.longitude.toFixed(2)}`}</Text>
+                        <Text
+                            style={{
+                                fontFamily: Fonts.IBMPlexSans_700Bold_Italic,
+                                fontSize: 25, textAlign: 'center'
+                            }}>{`${radius}m 🧭`}</Text>
+
                         <LottieView
                             autoPlay
                             ref={animation}
@@ -182,14 +189,19 @@ const StartGeofenceScreen = (props: any) => {
                         onPress={async () => {
                             if (await locationManager.hasGeofencingStarted()) {
                                 showToast('Geofencing already running');
+                                return;
                             }
                             if (isEmptyOrBlank(radius)) {
                                 showToast('Please enter radius');
                                 return;
                             }
+                            let rd = parseInt(radius);
+                            if (isNaN(rd) || rd === 0 || rd < 0) {
+                                showToast('Invalid radius');
+                                return;
+                            }
                             setProgress(true);
                             try {
-                                let rd = parseInt(radius);
                                 await locationManager.startGeofencing([{
                                     latitude: geofenceData.latitude,
                                     longitude: geofenceData.longitude,
@@ -204,7 +216,7 @@ const StartGeofenceScreen = (props: any) => {
                                 sessionState.setAppSession(true, geofenceData);
                                 setProgress(false);
                             } catch (error: any) {
-                                showToast(error.message);
+                                showToast('Error is '+error.message);
                                 setProgress(false);
                             }
                         }}

@@ -120,8 +120,8 @@ android {
         applicationId 'com.myleapps.localGeofenceApp'
         minSdkVersion rootProject.ext.minSdkVersion
         targetSdkVersion rootProject.ext.targetSdkVersion
-        versionCode 8
-        versionName "8.0.0"
+        versionCode 11
+        versionName "11.0.0"
     }
 
     splits {

@@ -54,7 +54,11 @@ const AppUpdate = (etProps: AppUpdateProps) => {
                             onPress={async () => {
                                 await appUpdateUtils.downloadUpdate(etProps.downloadLink, etProps.version, (progress) => {
                                     if (progress) {
-                                        setProgress((progress.totalBytesWritten / progress.totalBytesExpectedToWrite) * 100);
+                                        const p = (progress.totalBytesWritten / progress.totalBytesExpectedToWrite) * 100;
+                                        setProgress(p);
+                                        if (progress.totalBytesWritten === progress.totalBytesExpectedToWrite) {
+                                            etProps.hideDialog();
+                                        }
                                     }
                                 });
                                 await cache.setKeyInCache(CACHE_KEYS.LAST_UPDATED, new Date().toLocaleDateString());

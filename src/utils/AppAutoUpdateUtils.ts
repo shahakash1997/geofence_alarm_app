@@ -23,6 +23,8 @@ export class AppAutoUpdateUtils {
                 if (currentAppVersion) {
                     const currentVersion = parseFloat(currentAppVersion);
                     const configVersion = parseFloat(config.latest_version._value);
+                    console.log('config',configVersion);
+                    console.log('app version',currentVersion);
                     if (configVersion > currentVersion) {
                         return {
                             version: configVersion.toString(),
